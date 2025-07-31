@@ -151,7 +151,7 @@ function App() {
   const [dataItems, setDataItems] = useState([])
   const [selectedProductCode, setSelectedProductCode] = useState(products[0].code)
   const [ppu, setPpu] = useState(products[0].price)
-  const [discount, setDiscount] = useState(0)
+  const [discount, setDiscount] = useState(0) // Discount is now a percentage
 
   const addItem = () => {
     const selectedProduct = products.find((v) => itemRef.current.value === v.code)
@@ -161,7 +161,7 @@ function App() {
       item: selectedProduct.name,
       ppu: Number.parseFloat(ppuRef.current.value),
       qty: Number.parseInt(qtyRef.current.value),
-      discount: discountRef.current ? Number.parseFloat(discountRef.current.value) : 0,
+      discount: discountRef.current ? Number.parseFloat(discountRef.current.value) : 0, // Store as percentage
     }
 
     const existingItemIndex = dataItems.findIndex((item) => item.item === newItem.item && item.ppu === newItem.ppu)
@@ -169,7 +169,14 @@ function App() {
     if (existingItemIndex > -1) {
       const updatedDataItems = [...dataItems]
       updatedDataItems[existingItemIndex].qty += newItem.qty
-      updatedDataItems[existingItemIndex].discount += newItem.discount
+
+      // If the new item's discount is 0 (meaning the user didn't enter a specific discount for this new addition),
+      // then reuse the existing item's discount. Otherwise, use the new item's discount.
+      if (newItem.discount !== 0) {
+        updatedDataItems[existingItemIndex].discount = newItem.discount
+      }
+      // If newItem.discount is 0, the existing discount is implicitly reused as no change is made.
+
       setDataItems(updatedDataItems)
     } else {
       setDataItems([...dataItems, newItem])
@@ -232,13 +239,16 @@ function App() {
             <TextField fullWidth label="Quantity" type="number" inputRef={qtyRef} defaultValue={1} sx={{ mb: 2 }} />
             <TextField
               fullWidth
-              label="Discount"
+              label="Discount (%)" // Updated label
               type="number"
               inputRef={discountRef}
               value={discount}
               onChange={(e) => setDiscount(Number.parseFloat(e.target.value))}
               defaultValue={0}
               sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: <Typography>%</Typography>, // Add % sign to input
+              }}
             />
             <Divider sx={{ my: 2 }} />
             <Button variant="contained" fullWidth onClick={addItem}>
